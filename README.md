@@ -25,7 +25,7 @@ Download a binary for your platform from [releases](https://github.com/mtimkovic
 ```
 Usage: rl-replay-renamer <directory> [-n] [-q]
 
-Rename RL replay files.
+Rename Rocket League replay files.
 
 Positional Arguments:
   directory         directory containing replay files

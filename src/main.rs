@@ -7,7 +7,7 @@ use std::fs;
 use std::time::Duration;
 
 #[derive(FromArgs)]
-/// Rename RL replay files.
+/// Rename Rocket League replay files.
 struct Args {
     /// print output but do not rename
     #[argh(switch, short = 'n')]
