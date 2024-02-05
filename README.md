@@ -18,7 +18,7 @@ Wow!
 
 ## Install
 
-Download a binary for your platform from [releases](https://github.com/mtimkovich/rl-replay-renamer/releases) (TBD).
+Download a binary for your platform from [releases](https://github.com/mtimkovich/rl-replay-renamer/releases/latest).
 
 ## Usage
 
