@@ -33,7 +33,7 @@ struct Properties {
     TeamSize: u8,
     Team0Score: Option<u8>,
     Team1Score: Option<u8>,
-    RecordFPS: f32,
+    RecordFPS: u64,
     MapName: String,
     Date: String,
     NumFrames: u32,
@@ -71,8 +71,8 @@ fn mode_name(p: &Properties) -> String {
 }
 
 fn game_length(p: &Properties) -> String {
-    let length = p.NumFrames as f32 / p.RecordFPS;
-    let duration = Duration::new(length as u64, 0);
+    let length = p.NumFrames as u64 / p.RecordFPS;
+    let duration = Duration::new(length, 0);
     format_duration(duration).to_string()
 }
 
