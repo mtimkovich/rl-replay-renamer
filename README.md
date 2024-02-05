@@ -16,6 +16,28 @@ After:
 
 Wow!
 
+## Install
+
+Download a binary for your platform from [releases](https://github.com/mtimkovich/rl-replay-renamer/releases) (TBD).
+
 ## Usage
 
-TBD
+```
+Usage: rl-replay-renamer <directory> [-n] [-q]
+
+Rename RL replay files.
+
+Positional Arguments:
+  directory         directory containing replay files
+
+Options:
+  -n, --dry-run     print output but do not rename
+  -q, --quiet       suppress output
+  --help            display usage information
+```
+
+The Rocket League replay directory on Windows is `%UserProfile%/Documents/My Games/Rocket League/TAGame/Demos`.
+
+## Author
+
+Max "DJSwerve" Timkovich
