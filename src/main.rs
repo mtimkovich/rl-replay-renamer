@@ -9,11 +9,15 @@ use std::time::Duration;
 #[derive(FromArgs)]
 /// Rename RL replay files.
 struct Args {
-    /// print output but do not rename.
+    /// print output but do not rename
     #[argh(switch, short = 'n')]
     dry_run: bool,
 
-    /// directory containing replay files.
+    /// suppress output
+    #[argh(switch, short = 'q')]
+    quiet: bool,
+
+    /// directory containing replay files
     #[argh(positional)]
     directory: String,
 }
@@ -72,11 +76,13 @@ fn game_length(p: &Properties) -> String {
     format_duration(duration).to_string()
 }
 
-fn rename_dir(dir: &str, dry_run: bool) -> Result<()> {
+fn rename_dir(dir: &str, args: &Args) -> Result<()> {
     let files = fs::read_dir(dir)?;
 
     for path in files {
-        let filename = path?.path().display().to_string();
+        let path = path?.path();
+        let parent = path.parent().unwrap();
+        let filename = path.display().to_string();
         if !filename.ends_with(".replay") {
             continue;
         }
@@ -89,10 +95,14 @@ fn rename_dir(dir: &str, dry_run: bool) -> Result<()> {
             }
         };
 
-        println!("{} -> {}", filename, p);
+        let output_path = parent.join(p.to_string()).display().to_string();
 
-        if !dry_run {
-            // TODO: Do rename.
+        if !args.quiet {
+            println!("{} -> {}", filename, output_path);
+        }
+
+        if !args.dry_run {
+            fs::rename(&filename, output_path)?;
         }
     }
 
@@ -101,7 +111,7 @@ fn rename_dir(dir: &str, dry_run: bool) -> Result<()> {
 
 fn main() -> Result<()> {
     let args: Args = argh::from_env();
-    rename_dir(&args.directory, args.dry_run)?;
+    rename_dir(&args.directory, &args)?;
 
     Ok(())
 }
