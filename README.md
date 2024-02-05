@@ -11,7 +11,7 @@ Before:
 After:
 
 ```
-2024-01-27 19-26-08 | 2v2 | TrainStation_Dawn_P | 4-3 | 5m 23s.replay
+2024-01-27 19-26-08 | 2v2 | TrainStation_Dawn_P (Online) | 4-3 | 5m 23s.replay
 ```
 
 Wow!

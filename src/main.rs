@@ -1,9 +1,22 @@
 use anyhow::Result;
+use argh::FromArgs;
 use humantime::format_duration;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fs;
 use std::time::Duration;
+
+#[derive(FromArgs)]
+/// Rename RL replay files.
+struct Args {
+    /// print output but do not rename.
+    #[argh(switch, short = 'n')]
+    dry_run: bool,
+
+    /// directory containing replay files.
+    #[argh(positional)]
+    directory: String,
+}
 
 #[derive(Serialize, Deserialize)]
 struct ReplayData {
@@ -14,8 +27,8 @@ struct ReplayData {
 #[allow(non_snake_case)]
 struct Properties {
     TeamSize: u8,
-    Team0Score: u8,
-    Team1Score: u8,
+    Team0Score: Option<u8>,
+    Team1Score: Option<u8>,
     RecordFPS: f32,
     MapName: String,
     Date: String,
@@ -27,12 +40,13 @@ impl fmt::Display for Properties {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{} | {} | {} | {}-{} | {}.replay",
+            "{} | {} | {} ({}) | {}-{} | {}.replay",
             self.Date,
             mode_name(self),
             self.MapName,
-            self.Team0Score,
-            self.Team1Score,
+            self.MatchType,
+            self.Team0Score.unwrap_or_default(),
+            self.Team1Score.unwrap_or_default(),
             game_length(self),
         )
     }
@@ -58,10 +72,36 @@ fn game_length(p: &Properties) -> String {
     format_duration(duration).to_string()
 }
 
+fn rename_dir(dir: &str, dry_run: bool) -> Result<()> {
+    let files = fs::read_dir(dir)?;
+
+    for path in files {
+        let filename = path?.path().display().to_string();
+        if !filename.ends_with(".replay") {
+            continue;
+        }
+
+        let p = match parse(&filename) {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("{}: {}", filename, e);
+                continue;
+            }
+        };
+
+        println!("{} -> {}", filename, p);
+
+        if !dry_run {
+            // TODO: Do rename.
+        }
+    }
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
-    let filename = "/home/max/Downloads/RL Replays/28E4E0FE49754D401B77288664EC770A.replay";
-    let p = parse(filename)?;
-    println!("{}", p);
+    let args: Args = argh::from_env();
+    rename_dir(&args.directory, args.dry_run)?;
 
     Ok(())
 }
