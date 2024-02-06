@@ -1,6 +1,7 @@
 use anyhow::Result;
 use argh::FromArgs;
 use humantime::format_duration;
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fs;
@@ -33,7 +34,7 @@ struct Properties {
     TeamSize: u8,
     Team0Score: Option<u8>,
     Team1Score: Option<u8>,
-    RecordFPS: u64,
+    RecordFPS: f32,
     MapName: String,
     Date: String,
     NumFrames: u32,
@@ -71,27 +72,30 @@ fn mode_name(p: &Properties) -> String {
 }
 
 fn game_length(p: &Properties) -> String {
-    let length = p.NumFrames as u64 / p.RecordFPS;
-    let duration = Duration::new(length, 0);
+    let length = p.NumFrames as f32 / p.RecordFPS;
+    let duration = Duration::new(length as u64, 0);
     format_duration(duration).to_string()
 }
 
 fn rename_dir(dir: &str, args: &Args) -> Result<()> {
     let files = fs::read_dir(dir)?;
 
-    for path in files {
-        let path = path?.path();
+    files.par_bridge().for_each(|path| {
+        let path = match path {
+            Ok(path) => path.path(),
+            Err(_) => return,
+        };
         let parent = path.parent().unwrap();
         let filename = path.display().to_string();
         if !filename.ends_with(".replay") {
-            continue;
+            return;
         }
 
         let p = match parse(&filename) {
             Ok(p) => p,
             Err(e) => {
                 eprintln!("{}: {}", filename, e);
-                continue;
+                return;
             }
         };
 
@@ -102,9 +106,12 @@ fn rename_dir(dir: &str, args: &Args) -> Result<()> {
         }
 
         if !args.dry_run {
-            fs::rename(&filename, output_path)?;
+            match fs::rename(&filename, output_path) {
+                Ok(_) => (),
+                Err(e) => eprintln!("{}: {}", filename, e),
+            };
         }
-    }
+    });
 
     Ok(())
 }
