@@ -54,7 +54,7 @@ jobs:
 
     - name: Build
       shell: bash
-      run: cargo build --locked --release --target=${{ matrix.job.target }}
+      run: cargo build --release --target=${{ matrix.job.target }}
 
     - name: Set binary name & path
       id: bin
