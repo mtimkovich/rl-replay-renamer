@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "rl-replay-renamer"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "argh",

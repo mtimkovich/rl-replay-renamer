@@ -11,10 +11,12 @@ Before:
 After:
 
 ```
-2024-01-27 19-26-08 | 2v2 | TrainStation_Dawn_P (Online) | 4-3 | 5m 23s.replay
+2024-01-27 19-26-08 - 2v2 - TrainStation_Dawn_P (Online) - 4-3 - 5m 23s.replay
 ```
 
 Wow!
+
+It's written in Rust and uses parallelism so it's fast, able to rename ~1 GB of replays in about 13 seconds.
 
 ## Install
 
@@ -23,7 +25,7 @@ Download a binary for your platform from [releases](https://github.com/mtimkovic
 ## Usage
 
 ```
-Usage: rl-replay-renamer <directory> [-n] [-q]
+Usage: rl-replay-renamer.exe <directory> [-n] [-q]
 
 Rename Rocket League replay files.
 

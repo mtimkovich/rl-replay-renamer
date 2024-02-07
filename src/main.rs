@@ -5,6 +5,7 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fs;
+use std::path::PathBuf;
 use std::time::Duration;
 
 #[derive(FromArgs)]
@@ -45,7 +46,7 @@ impl fmt::Display for Properties {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{} | {} | {} ({}) | {}-{} | {}.replay",
+            "{} - {} - {} ({}) - {}-{} - {}.replay",
             self.Date,
             mode_name(self),
             self.MapName,
@@ -57,7 +58,7 @@ impl fmt::Display for Properties {
     }
 }
 
-fn parse(filename: &str) -> Result<Properties> {
+fn parse(filename: &PathBuf) -> Result<Properties> {
     let buffer = fs::read(filename)?;
     let file = boxcars::ParserBuilder::new(&buffer).parse()?;
     // I hope this isn't the best way to do this lol.
@@ -91,24 +92,26 @@ fn rename_dir(dir: &str, args: &Args) -> Result<()> {
             return;
         }
 
-        let p = match parse(&filename) {
+        let p = match parse(&path) {
             Ok(p) => p,
             Err(e) => {
-                eprintln!("{}: {}", filename, e);
+                eprintln!("{}: {}", path.display(), e);
                 return;
             }
         };
 
-        let output_path = parent.join(p.to_string()).display().to_string();
+        let output_path = parent.join(p.to_string());
 
         if !args.quiet {
-            println!("{} -> {}", filename, output_path);
+            println!("{} -> {}", path.display(), output_path.display());
         }
 
         if !args.dry_run {
-            match fs::rename(&filename, output_path) {
+            match fs::rename(&path, &output_path) {
                 Ok(_) => (),
-                Err(e) => eprintln!("{}: {}", filename, e),
+                Err(e) => {
+                    eprintln!("{}: {}", path.display(), e);
+                }
             };
         }
     });
