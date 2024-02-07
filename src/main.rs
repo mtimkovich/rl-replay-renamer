@@ -2,6 +2,7 @@ use anyhow::Result;
 use argh::FromArgs;
 use humantime::format_duration;
 use rayon::prelude::*;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fs;
@@ -80,6 +81,7 @@ fn game_length(p: &Properties) -> String {
 
 fn rename_dir(dir: &str, args: &Args) -> Result<()> {
     let files = fs::read_dir(dir)?;
+    let re = Regex::new(r"[A-F0-9]+\.replay").unwrap();
 
     files.par_bridge().for_each(|path| {
         let path = match path {
@@ -87,8 +89,11 @@ fn rename_dir(dir: &str, args: &Args) -> Result<()> {
             Err(_) => return,
         };
         let parent = path.parent().unwrap();
-        let filename = path.display().to_string();
+        let filename = path.file_name().unwrap().to_str().unwrap();
         if !filename.ends_with(".replay") {
+            return;
+        } else if !re.is_match(&filename) {
+            // Ignore already renamed replays.
             return;
         }
 
