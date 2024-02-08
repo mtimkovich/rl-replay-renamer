@@ -97,15 +97,15 @@ fn rename_dir(args: &Args) -> Result<()> {
             return;
         }
 
-        let p = match parse(&path) {
-            Ok(p) => p,
+        let props = match parse(&path) {
+            Ok(props) => props,
             Err(e) => {
                 eprintln!("{}: {}", path.display(), e);
                 return;
             }
         };
 
-        let output_path = parent.join(p.to_string());
+        let output_path = parent.join(props.to_string());
 
         if !args.quiet {
             println!("{} -> {}", path.display(), output_path.display());
