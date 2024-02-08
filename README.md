@@ -1,6 +1,6 @@
 # Rocket League Replay Renamer
 
-By default, Rocket League saves replays as 32 character hexadecimal strings, which makes finding the one you're looking for a chore. This script renames those files to include game mode, score, and some other information to make it easier for our human brains to understand.
+By default, Rocket League saves replays as 32 character hexadecimal strings, which makes finding the one you're looking for a chore. This script renames those replay files to include game mode, score, and some other useful information to make it easier for our human brains to understand.
 
 Before:
 
@@ -16,7 +16,10 @@ After:
 
 Wow!
 
-It's written in Rust and uses parallelism so it's fast, able to rename ~1 GB of replays in about 13 seconds.
+## Features
+
+* Written in Rust and using multithreading, it's fast, able to rename ~1 GB of replays in about 13 seconds.
+* Ignores already renamed replays.
 
 ## Install
 
