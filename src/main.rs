@@ -87,7 +87,7 @@ fn rename_dir(args: &Args) {
             return;
         }
     };
-    let re = Regex::new(r"[A-F0-9]+\.replay").unwrap();
+    let re = Regex::new(r"^[A-F0-9]+\.replay$").unwrap();
 
     files.par_bridge().for_each(|path| {
         let path = match path {
@@ -96,9 +96,7 @@ fn rename_dir(args: &Args) {
         };
         let parent = path.parent().unwrap();
         let filename = path.file_name().unwrap().to_str().unwrap();
-        if !filename.ends_with(".replay") {
-            return;
-        } else if !re.is_match(&filename) {
+        if !re.is_match(&filename) {
             // Ignore already renamed replays.
             return;
         }
