@@ -79,8 +79,8 @@ fn game_length(p: &Properties) -> String {
     format_duration(duration).to_string()
 }
 
-fn rename_dir(dir: &str, args: &Args) -> Result<()> {
-    let files = fs::read_dir(dir)?;
+fn rename_dir(args: &Args) -> Result<()> {
+    let files = fs::read_dir(&args.directory)?;
     let re = Regex::new(r"[A-F0-9]+\.replay").unwrap();
 
     files.par_bridge().for_each(|path| {
@@ -126,7 +126,7 @@ fn rename_dir(dir: &str, args: &Args) -> Result<()> {
 
 fn main() -> Result<()> {
     let args: Args = argh::from_env();
-    rename_dir(&args.directory, &args)?;
+    rename_dir(&args)?;
 
     Ok(())
 }
