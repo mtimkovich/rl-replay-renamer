@@ -74,7 +74,10 @@ fn mode_name(p: &Properties) -> String {
 
 fn format_duration(duration: Duration) -> String {
     let mut secs = duration.as_secs();
-    if secs < 60 {
+    if secs == 0 {
+        let ms = duration.as_millis();
+        return format!("{}ms", ms);
+    } else if secs < 60 {
         return format!("{}s", secs);
     }
 
