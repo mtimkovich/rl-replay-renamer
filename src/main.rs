@@ -1,13 +1,13 @@
 use anyhow::Result;
 use argh::FromArgs;
-use humantime::format_duration;
+// use humantime::format_duration;
 use rayon::prelude::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fs;
 use std::path::PathBuf;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 #[derive(FromArgs)]
 /// Rename Rocket League replay files.
@@ -73,53 +73,84 @@ fn mode_name(p: &Properties) -> String {
     format!("{}v{}", p.TeamSize, p.TeamSize)
 }
 
+fn format_duration(duration: Duration) -> String {
+    let mut secs = duration.as_secs();
+    if secs < 60 {
+        return format!("{}s", secs);
+    }
+
+    let minutes = secs / 60;
+    secs = secs % 60;
+    return format!("{}m {}s", minutes, secs);
+}
+
 fn game_length(p: &Properties) -> String {
     let length = p.NumFrames as f32 / p.RecordFPS;
     let duration = Duration::new(length as u64, 0);
-    format_duration(duration).to_string()
+    format_duration(duration)
 }
 
 fn rename_dir(args: &Args) -> Result<()> {
     let files = fs::read_dir(&args.directory)?;
     let re = Regex::new(r"[A-F0-9]+\.replay").unwrap();
+    let start = Instant::now();
 
-    files.par_bridge().for_each(|path| {
-        let path = match path {
-            Ok(path) => path.path(),
-            Err(_) => return,
-        };
-        let parent = path.parent().unwrap();
-        let filename = path.file_name().unwrap().to_str().unwrap();
-        if !filename.ends_with(".replay") {
-            return;
-        } else if !re.is_match(&filename) {
-            // Ignore already renamed replays.
-            return;
-        }
-
-        let p = match parse(&path) {
-            Ok(p) => p,
-            Err(e) => {
-                eprintln!("{}: {}", path.display(), e);
-                return;
+    let count: u64 = files
+        .par_bridge()
+        .map(|path| {
+            let path = match path {
+                Ok(path) => path.path(),
+                Err(_) => return 0,
+            };
+            let parent = path.parent().unwrap();
+            let filename = path.file_name().unwrap().to_str().unwrap();
+            if !filename.ends_with(".replay") {
+                return 0;
+            } else if !re.is_match(&filename) {
+                // Ignore already renamed replays.
+                return 0;
             }
-        };
 
-        let output_path = parent.join(p.to_string());
-
-        if !args.quiet {
-            println!("{} -> {}", path.display(), output_path.display());
-        }
-
-        if !args.dry_run {
-            match fs::rename(&path, &output_path) {
-                Ok(_) => (),
+            let p = match parse(&path) {
+                Ok(p) => p,
                 Err(e) => {
                     eprintln!("{}: {}", path.display(), e);
+                    return 0;
                 }
             };
-        }
-    });
+
+            let output_path = parent.join(p.to_string());
+
+            if !args.quiet {
+                println!("{} -> {}", path.display(), output_path.display());
+            }
+
+            if !args.dry_run {
+                match fs::rename(&path, &output_path) {
+                    Ok(_) => (),
+                    Err(e) => {
+                        eprintln!("{}: {}", path.display(), e);
+                    }
+                };
+            }
+
+            return 1;
+        })
+        .collect::<Vec<u64>>()
+        .iter()
+        .sum();
+
+    let renamed = match args.dry_run {
+        false => "Renamed",
+        true => "(Pretended to) rename",
+    };
+
+    println!(
+        "{} {} replays in {}.",
+        renamed,
+        count,
+        format_duration(start.elapsed())
+    );
 
     Ok(())
 }
