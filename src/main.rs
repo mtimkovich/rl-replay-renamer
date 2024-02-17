@@ -1,6 +1,5 @@
 use anyhow::Result;
 use argh::FromArgs;
-// use humantime::format_duration;
 use rayon::prelude::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -90,8 +89,14 @@ fn game_length(p: &Properties) -> String {
     format_duration(duration)
 }
 
-fn rename_dir(args: &Args) -> Result<()> {
-    let files = fs::read_dir(&args.directory)?;
+fn rename_dir(args: &Args) {
+    let files = match fs::read_dir(&args.directory) {
+        Ok(files) => files,
+        Err(e) => {
+            eprintln!("{}", e);
+            return;
+        }
+    };
     let re = Regex::new(r"[A-F0-9]+\.replay").unwrap();
     let start = Instant::now();
 
@@ -104,22 +109,20 @@ fn rename_dir(args: &Args) -> Result<()> {
             };
             let parent = path.parent().unwrap();
             let filename = path.file_name().unwrap().to_str().unwrap();
-            if !filename.ends_with(".replay") {
-                return 0;
-            } else if !re.is_match(&filename) {
+            if !re.is_match(&filename) {
                 // Ignore already renamed replays.
                 return 0;
             }
 
-            let p = match parse(&path) {
-                Ok(p) => p,
+            let props = match parse(&path) {
+                Ok(props) => props,
                 Err(e) => {
                     eprintln!("{}: {}", path.display(), e);
                     return 0;
                 }
             };
 
-            let output_path = parent.join(p.to_string());
+            let output_path = parent.join(props.to_string());
 
             if !args.quiet {
                 println!("{} -> {}", path.display(), output_path.display());
@@ -130,6 +133,7 @@ fn rename_dir(args: &Args) -> Result<()> {
                     Ok(_) => (),
                     Err(e) => {
                         eprintln!("{}: {}", path.display(), e);
+                        return 0;
                     }
                 };
             }
@@ -142,7 +146,7 @@ fn rename_dir(args: &Args) -> Result<()> {
 
     let renamed = match args.dry_run {
         false => "Renamed",
-        true => "(Pretended to) rename",
+        true => "Pretended to rename",
     };
 
     println!(
@@ -151,13 +155,9 @@ fn rename_dir(args: &Args) -> Result<()> {
         count,
         format_duration(start.elapsed())
     );
-
-    Ok(())
 }
 
-fn main() -> Result<()> {
+fn main() {
     let args: Args = argh::from_env();
-    rename_dir(&args)?;
-
-    Ok(())
+    rename_dir(&args);
 }

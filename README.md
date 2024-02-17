@@ -18,7 +18,7 @@ Wow!
 
 ## Features
 
-* Written in Rust and using multithreading: it's fast, able to rename ~1 GB of replays in about 13 seconds.
+* Written in Rust and using multithreading, it's fast, able to rename ~1 GB of replays in about 13 seconds.
 * Ignores already renamed replays.
 
 ## Install
