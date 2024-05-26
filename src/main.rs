@@ -1,5 +1,6 @@
 use anyhow::Result;
 use argh::FromArgs;
+use once_cell::sync::Lazy;
 use rayon::prelude::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -92,6 +93,43 @@ fn game_length(p: &Properties) -> String {
     format_duration(duration)
 }
 
+static REPLAY_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"[A-F0-9]+\.replay").unwrap());
+
+fn rename_file(path: PathBuf, args: &Args) -> u64 {
+    let parent = path.parent().unwrap();
+    let filename = path.file_name().unwrap().to_str().unwrap();
+    if !REPLAY_REGEX.is_match(&filename) {
+        // Ignore already renamed replays.
+        return 0;
+    }
+
+    let props = match parse(&path) {
+        Ok(props) => props,
+        Err(e) => {
+            eprintln!("{}: {}", path.display(), e);
+            return 0;
+        }
+    };
+
+    let output_path = parent.join(props.to_string());
+
+    if !args.quiet {
+        println!("{} -> {}", path.display(), output_path.display());
+    }
+
+    if !args.dry_run {
+        match fs::rename(&path, &output_path) {
+            Ok(_) => (),
+            Err(e) => {
+                eprintln!("{}: {}", path.display(), e);
+                return 0;
+            }
+        };
+    }
+
+    return 1;
+}
+
 fn rename_dir(args: &Args) {
     let files = match fs::read_dir(&args.directory) {
         Ok(files) => files,
@@ -100,48 +138,14 @@ fn rename_dir(args: &Args) {
             return;
         }
     };
-    let re = Regex::new(r"[A-F0-9]+\.replay").unwrap();
+
     let start = Instant::now();
 
     let count: u64 = files
         .par_bridge()
-        .map(|path| {
-            let path = match path {
-                Ok(path) => path.path(),
-                Err(_) => return 0,
-            };
-            let parent = path.parent().unwrap();
-            let filename = path.file_name().unwrap().to_str().unwrap();
-            if !re.is_match(&filename) {
-                // Ignore already renamed replays.
-                return 0;
-            }
-
-            let props = match parse(&path) {
-                Ok(props) => props,
-                Err(e) => {
-                    eprintln!("{}: {}", path.display(), e);
-                    return 0;
-                }
-            };
-
-            let output_path = parent.join(props.to_string());
-
-            if !args.quiet {
-                println!("{} -> {}", path.display(), output_path.display());
-            }
-
-            if !args.dry_run {
-                match fs::rename(&path, &output_path) {
-                    Ok(_) => (),
-                    Err(e) => {
-                        eprintln!("{}: {}", path.display(), e);
-                        return 0;
-                    }
-                };
-            }
-
-            return 1;
+        .map(|p| match p {
+            Ok(p) => rename_file(p.path(), args),
+            Err(_) => 0,
         })
         .collect::<Vec<u64>>()
         .iter()
